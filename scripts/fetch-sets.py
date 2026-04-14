@@ -52,8 +52,8 @@ def fetch_top_cards(set_id, limit=50):
         cm_price = card.get("cardmarket", {}).get("prices", {}).get("averageSellPrice")
         raw_price = tcg_price or cm_price or 0
         
-        # Only include cards worth $20+ raw
-        if raw_price >= 20:
+        # Include all cards with pricing data
+        if raw_price > 0:
             card_data = {
                 "name": card.get("name"),
                 "number": card.get("number"),
