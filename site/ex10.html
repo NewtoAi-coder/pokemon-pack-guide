@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unseen Forces - Pokemon Pack Guide</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { 
+            text-align: center; 
+            padding: 40px 0; 
+            border-bottom: 2px solid #333;
+            margin-bottom: 40px;
+        }
+        h1 { font-size: 2.5rem; margin-bottom: 10px; }
+        .subtitle { color: #888; font-size: 1.1rem; }
+        .search-bar {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 40px;
+            padding: 15px 20px;
+            font-size: 1rem;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 8px;
+            color: #fff;
+        }
+        .sets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 60px;
+        }
+        .set-card {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .set-card:hover {
+            border-color: #4a9eff;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(74, 158, 255, 0.3);
+        }
+        .set-logo {
+            width: 100%;
+            height: 120px;
+            object-fit: contain;
+            margin-bottom: 15px;
+        }
+        .set-name { font-size: 1.3rem; font-weight: 600; margin-bottom: 8px; }
+        .set-meta { color: #888; font-size: 0.9rem; margin-bottom: 4px; }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 24px;
+            margin-top: 40px;
+        }
+        .card-item {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.3s;
+        }
+        .card-item:hover {
+            border-color: #4a9eff;
+            transform: scale(1.02);
+        }
+        .card-image {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .card-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+        .price-label { color: #888; }
+        .price-value { font-weight: 600; color: #4a9eff; }
+        .grade-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        .grade-yes { background: #28a745; color: #fff; }
+        .grade-no { background: #666; color: #ccc; }
+        .back-link {
+            display: inline-block;
+            margin: 20px 0;
+            padding: 10px 20px;
+            background: #333;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.3s;
+        }
+        .back-link:hover { background: #444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <a href="index.html" class="back-link">← Back to All Sets</a>
+        <header>
+            <h1>Unseen Forces</h1>
+            <p class="subtitle">Released: 2005/08/01 • EX</p>
+            <p class="subtitle">Total Cards: 145</p>
+        </header>
+        <h2 style="margin-bottom: 20px; color: #4a9eff;">Top Chase Cards</h2>
+        <div class="card-grid">
+            
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/114_hires.png" alt="Raikou ★" class="card-image" loading="lazy">
+            <div class="card-name">Raikou ★ #114</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$1100.00</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$3850.00</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo Star</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/115_hires.png" alt="Suicune ★" class="card-image" loading="lazy">
+            <div class="card-name">Suicune ★ #115</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$1100.00</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$3850.00</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo Star</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/113_hires.png" alt="Entei ★" class="card-image" loading="lazy">
+            <div class="card-name">Entei ★ #113</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$990.00</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$3465.00</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo Star</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/105_hires.png" alt="Lugia ex" class="card-image" loading="lazy">
+            <div class="card-name">Lugia ex #105</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$902.49</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$3158.72</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo EX</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/112_hires.png" alt="Umbreon ex" class="card-image" loading="lazy">
+            <div class="card-name">Umbreon ex #112</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$899.99</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$3149.97</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo EX</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/102_hires.png" alt="Espeon ex" class="card-image" loading="lazy">
+            <div class="card-name">Espeon ex #102</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$399.00</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$1396.50</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo EX</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/117_hires.png" alt="Celebi ex" class="card-image" loading="lazy">
+            <div class="card-name">Celebi ex #117</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$270.00</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$945.00</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Secret</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/104_hires.png" alt="Ho-Oh ex" class="card-image" loading="lazy">
+            <div class="card-name">Ho-Oh ex #104</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$267.79</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$937.27</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo EX</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/108_hires.png" alt="Scizor ex" class="card-image" loading="lazy">
+            <div class="card-name">Scizor ex #108</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$249.99</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$874.97</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo EX</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/107_hires.png" alt="Politoed ex" class="card-image" loading="lazy">
+            <div class="card-name">Politoed ex #107</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$239.99</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$839.97</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo EX</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/111_hires.png" alt="Tyranitar ex" class="card-image" loading="lazy">
+            <div class="card-name">Tyranitar ex #111</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$206.25</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$721.88</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo EX</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/103_hires.png" alt="Feraligatr ex" class="card-image" loading="lazy">
+            <div class="card-name">Feraligatr ex #103</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$187.50</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$656.25</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo EX</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/109_hires.png" alt="Steelix ex" class="card-image" loading="lazy">
+            <div class="card-name">Steelix ex #109</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$146.33</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$512.16</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo EX</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/101_hires.png" alt="Blissey ex" class="card-image" loading="lazy">
+            <div class="card-name">Blissey ex #101</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$144.98</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$507.43</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo EX</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/110_hires.png" alt="Typhlosion ex" class="card-image" loading="lazy">
+            <div class="card-name">Typhlosion ex #110</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$132.97</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$465.39</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo EX</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/106_hires.png" alt="Meganium ex" class="card-image" loading="lazy">
+            <div class="card-name">Meganium ex #106</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$125.79</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$440.27</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo EX</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/116_hires.png" alt="Rocket's Persian ex" class="card-image" loading="lazy">
+            <div class="card-name">Rocket's Persian ex #116</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$117.73</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$412.06</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Secret</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/question_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #?</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$106.99</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$374.46</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/4_hires.png" alt="Feraligatr" class="card-image" loading="lazy">
+            <div class="card-name">Feraligatr #4</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$91.45</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$320.07</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/5_hires.png" alt="Flareon" class="card-image" loading="lazy">
+            <div class="card-name">Flareon #5</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$75.96</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$265.86</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/14_hires.png" alt="Slowking" class="card-image" loading="lazy">
+            <div class="card-name">Slowking #14</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$67.55</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$236.42</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/1_hires.png" alt="Ampharos" class="card-image" loading="lazy">
+            <div class="card-name">Ampharos #1</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$67.25</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$235.38</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/19_hires.png" alt="Vaporeon" class="card-image" loading="lazy">
+            <div class="card-name">Vaporeon #19</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$63.59</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$222.56</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/7_hires.png" alt="Houndoom" class="card-image" loading="lazy">
+            <div class="card-name">Houndoom #7</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$57.71</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$201.99</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/8_hires.png" alt="Jolteon" class="card-image" loading="lazy">
+            <div class="card-name">Jolteon #8</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$53.65</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$187.78</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo</span>
+            </div>
+            <span class="grade-badge grade-yes">Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/K_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #K</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$46.68</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$163.38</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/!_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #!</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$45.89</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$160.62</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/I_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #I</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$42.49</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$148.72</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/E_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #E</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$40.17</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$140.59</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/D_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #D</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$39.16</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$137.06</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/C_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #C</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$38.99</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$136.47</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/R_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #R</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$36.82</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$128.87</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/U_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #U</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$35.33</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$123.66</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/13_hires.png" alt="Slowbro" class="card-image" loading="lazy">
+            <div class="card-name">Slowbro #13</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$35.31</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$123.59</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/X_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #X</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$34.68</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$121.38</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/P_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #P</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$34.58</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$121.03</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/T_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #T</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$34.38</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$120.33</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/V_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #V</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$33.49</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$117.22</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/Z_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #Z</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$32.11</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$112.38</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/Y_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #Y</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$31.91</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$111.69</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/15_hires.png" alt="Sudowoodo" class="card-image" loading="lazy">
+            <div class="card-name">Sudowoodo #15</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$30.94</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$108.29</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare Holo</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/N_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #N</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$30.92</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$108.22</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/A_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #A</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$30.30</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$106.05</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/L_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #L</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$27.77</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$97.19</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/F_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #F</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$27.24</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$95.34</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/Q_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #Q</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$26.18</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$91.63</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/M_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #M</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$25.20</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$88.20</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/S_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #S</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$24.00</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$84.00</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/H_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #H</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$23.42</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$81.97</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        <div class="card-item">
+            <img src="https://images.pokemontcg.io/ex10/W_hires.png" alt="Unown" class="card-image" loading="lazy">
+            <div class="card-name">Unown #W</div>
+            <div class="price-row">
+                <span class="price-label">Raw:</span>
+                <span class="price-value">$22.51</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">PSA 10:</span>
+                <span class="price-value">$78.79</span>
+            </div>
+            <div class="price-row">
+                <span class="price-label">Rarity:</span>
+                <span>Rare</span>
+            </div>
+            <span class="grade-badge grade-no">Not Worth Grading</span>
+        </div>
+        
+        </div>
+    
+    </div>
+</body>
+</html>
