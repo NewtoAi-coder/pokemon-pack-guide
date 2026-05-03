@@ -240,11 +240,14 @@ def enrich_file(path):
 
 
 def rebuild_manifest():
-    """Rewrite _manifest.json with total_slots derived from current binder JSONs.
+    """Rewrite _manifest.json with total_slots + total_value per set.
 
-    Cheap: reads the JSONs already on disk, no network calls. Safe to run any
-    time — keeps the directory page (binders.html) in sync with the actual
-    slot count after variant expansion.
+    Both fields are derived from the current binder JSONs on disk — no network
+    calls, no API quota use. Safe to run any time; keeps the directory page
+    (binders.html) in sync with the actual slot count and aggregate set value.
+
+    total_value sums the raw price across every priceable slot (skips null
+    prices, so unpriced cards just don't contribute).
     """
     manifest_path = BINDER_DIR / "_manifest.json"
     if not manifest_path.exists():
@@ -253,17 +256,23 @@ def rebuild_manifest():
     with open(manifest_path) as f:
         manifest = json.load(f)
     slot_counts = {}
+    set_values = {}
     for p in BINDER_DIR.glob("*.json"):
         if p.name == "_manifest.json":
             continue
         try:
             with open(p) as f:
                 d = json.load(f)
-            slot_counts[d["id"]] = len(d.get("cards", []))
+            cards = d.get("cards", [])
+            slot_counts[d["id"]] = len(cards)
+            set_values[d["id"]] = round(
+                sum(float(c["raw"]) for c in cards if c.get("raw") is not None), 2
+            )
         except Exception:
             continue
     for s in manifest.get("sets", []):
         s["total_slots"] = slot_counts.get(s["id"], s.get("total_cards", 0))
+        s["total_value"] = set_values.get(s["id"], 0.0)
     with open(manifest_path, "w") as f:
         json.dump(manifest, f, separators=(",", ":"))
     print(f"  manifest rebuilt: {len(manifest.get('sets', []))} sets", flush=True)

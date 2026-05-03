@@ -54,6 +54,12 @@
     font-size: 0.75rem; color: #666; font-variant-numeric: tabular-nums;
   }
   .set-tile-progress strong { color: #4ade80; }
+  .set-tile-value {
+    margin-top: 4px; font-size: 0.78rem; color: #888;
+    font-variant-numeric: tabular-nums;
+  }
+  .set-tile-value .total-val { color: #aaa; }
+  .set-tile-value .your-val { color: #4ade80; font-weight: 600; }
   .empty { padding: 40px; text-align: center; color: #666; }
   .loading { padding: 40px; text-align: center; color: #888; }
 </style>
@@ -82,6 +88,17 @@
       const arr = JSON.parse(localStorage.getItem('binder_have_'+sid) || '[]');
       return arr.length;
     } catch(e){ return 0; }
+  }
+
+  function getHaveSet(sid){
+    try {
+      return new Set(JSON.parse(localStorage.getItem('binder_have_'+sid) || '[]'));
+    } catch(e){ return new Set(); }
+  }
+
+  function fmtMoney(p){
+    if (p == null || isNaN(p)) return '$0';
+    return '$' + Math.round(p).toLocaleString();
   }
 
   const SERIES_ORDER = [
@@ -131,6 +148,7 @@
         const got = getProgress(s.id);
         const cards = s.total_cards || 0;
         const slots = s.total_slots || cards;
+        const totalValue = s.total_value || 0;
         const pct = slots ? Math.round(got/slots*100) : 0;
         const cardSuffix = (slots !== cards) ? ` (${cards} cards)` : '';
         const progBar = got > 0
@@ -139,9 +157,19 @@
         const metaLine = (slots !== cards)
           ? `${slots} slots · ${cards} cards · ${s.release_date || ''}`
           : `${cards} cards · ${s.release_date || ''}`;
-        html += `<a class="set-tile" href="binder.html?set=${s.id}">
+        // Value line: show total when known. "Your" populated by lazy fetch
+        // for started sets only.
+        let valueLine = '';
+        if (totalValue > 0){
+          const yourSlot = (got > 0) ? `<span class="your-val" data-set-value-for="${s.id}"></span>` : '';
+          valueLine = `<div class="set-tile-value">
+            <span class="total-val">Worth ${fmtMoney(totalValue)}</span>${yourSlot}
+          </div>`;
+        }
+        html += `<a class="set-tile" href="binder.html?set=${s.id}" data-set-id="${s.id}">
           <div class="set-tile-name">${s.name}</div>
           <div class="set-tile-meta">${metaLine}</div>
+          ${valueLine}
           ${progBar}
         </a>`;
       });
@@ -153,6 +181,40 @@
     const totalSets = manifest.sets.length;
     const startedSets = manifest.sets.filter(s=> getProgress(s.id) > 0).length;
     document.getElementById('stats').innerHTML = `<strong>${totalSets}</strong> binders · ${startedSets} started`;
+
+    // Lazy-load "your value" for started sets only. Bounded by user's own
+    // collection size, typically 0–5 sets, so 1 fetch per started set is fine.
+    manifest.sets
+      .filter(s => getProgress(s.id) > 0 && (s.total_value || 0) > 0)
+      .forEach(s => loadYourValue(s.id));
+  }
+
+  // Per-tile background fetch: load the set's binder JSON and sum the raw
+  // prices of slots the user has marked. Updates the matching .your-val span.
+  // Cached in-memory across re-renders (search filtering re-renders).
+  const yourValueCache = {};
+  function loadYourValue(sid){
+    if (yourValueCache[sid] != null){
+      paintYourValue(sid, yourValueCache[sid]);
+      return;
+    }
+    fetch('data/binder/' + sid + '.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d) return;
+        const haveSet = getHaveSet(sid);
+        let mine = 0;
+        for (const c of d.cards){
+          if (c.raw != null && haveSet.has(c.id)) mine += c.raw;
+        }
+        yourValueCache[sid] = mine;
+        paintYourValue(sid, mine);
+      })
+      .catch(()=>{});
+  }
+  function paintYourValue(sid, mine){
+    const el = document.querySelector(`[data-set-value-for="${sid}"]`);
+    if (el) el.textContent = ` · Your: ${fmtMoney(mine)}`;
   }
 
   document.getElementById('search').oninput = (e)=>{ query = e.target.value; render(); };

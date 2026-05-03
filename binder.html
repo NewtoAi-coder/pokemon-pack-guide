@@ -136,6 +136,16 @@
     padding: 4px 12px; border-radius: 4px;
     font-size: 0.85rem; font-weight: 600;
   }
+  .value-summary {
+    margin-top: 14px; display: inline-block;
+    background: #131313; border: 1px solid #2a2a2a; border-radius: 8px;
+    padding: 8px 16px; font-size: 0.95rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .value-summary strong { color: #4ade80; font-weight: 700; }
+  .value-summary .vs-of { color: #666; padding: 0 4px; }
+  .value-summary .vs-total { color: #aaa; }
+  .value-summary .vs-empty { color: #666; font-style: italic; }
   .empty { padding: 48px; text-align: center; color: #666; }
   .modal {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
@@ -171,6 +181,7 @@
   <header>
     <h1 id="setName">Loading…</h1>
     <div class="sub" id="setSub"></div>
+    <div class="value-summary" id="valueSummary" style="display:none;"></div>
     <div class="sub" style="margin-top:6px;"><a href="index.html">← All sets</a></div>
   </header>
 
@@ -220,6 +231,12 @@
     if (p >= 1000) return '$' + Math.round(p).toLocaleString();
     if (p >= 10) return '$' + Math.round(p);
     return '$' + p.toFixed(2);
+  }
+
+  // Aggregate-money formatter — always whole dollars w/ commas. For set totals.
+  function fmtMoney(p){
+    if (p == null || isNaN(p)) return '$0';
+    return '$' + Math.round(p).toLocaleString();
   }
 
   function escHtml(s){
@@ -358,6 +375,28 @@
     const got = setData.cards.filter(c=>have.has(c.id)).length;
     const pct = total ? Math.round(got/total*100) : 0;
     document.getElementById('progress').innerHTML = `<strong>${got}</strong>/${total} (${pct}%)`;
+    updateValueSummary();
+  }
+
+  function updateValueSummary(){
+    const el = document.getElementById('valueSummary');
+    if (!setData){ el.style.display = 'none'; return; }
+    let total = 0, mine = 0;
+    for (const c of setData.cards){
+      if (c.raw == null) continue;
+      total += c.raw;
+      if (have.has(c.id)) mine += c.raw;
+    }
+    if (total <= 0){
+      el.style.display = 'inline-block';
+      el.innerHTML = '<span class="vs-empty">Pricing not yet available for this set</span>';
+      return;
+    }
+    el.style.display = 'inline-block';
+    el.innerHTML =
+      `Your binder: <strong>${fmtMoney(mine)}</strong>` +
+      `<span class="vs-of">of</span>` +
+      `<span class="vs-total">${fmtMoney(total)} total</span>`;
   }
 
   function openModal(c){
