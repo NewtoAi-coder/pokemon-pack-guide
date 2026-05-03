@@ -70,10 +70,19 @@
   }
   .slot.have::after {
     content: '✓'; position: absolute; top: 6px; right: 6px;
-    width: 22px; height: 22px; line-height: 22px; text-align: center;
+    width: 26px; height: 26px; line-height: 26px; text-align: center;
     background: #4ade80; color: #0a0a0a; border-radius: 50%;
-    font-weight: 800; font-size: 0.85rem;
+    font-weight: 800; font-size: 1rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
   }
+  .zoom-btn {
+    position: absolute; top: 6px; left: 6px;
+    width: 28px; height: 28px; line-height: 26px; text-align: center;
+    background: rgba(0,0,0,0.7); color: #fff; border: 1px solid #555;
+    border-radius: 50%; font-size: 0.85rem; cursor: pointer; z-index: 2;
+    transition: background .1s;
+  }
+  .zoom-btn:hover, .zoom-btn:active { background: #4a9eff; border-color: #4a9eff; }
   .slot-meta {
     padding: 6px 8px; background: #1a1a1a;
     font-size: 0.72rem; line-height: 1.25;
@@ -205,6 +214,7 @@
         div.dataset.id = c.id;
         div.innerHTML = `
           <div class="slot-img-wrap">
+            <button class="zoom-btn" title="Enlarge">🔍</button>
             <img class="slot-img" src="${c.img}" alt="${c.name}" loading="lazy">
           </div>
           <div class="slot-meta">
@@ -213,14 +223,11 @@
             <div class="slot-rarity">${c.rarity || ''}</div>
           </div>
         `;
-        div.addEventListener('click', (e)=>{
-          // tap meta area = toggle have; tap image = open modal
-          if (e.target.closest('.slot-img-wrap')) {
-            openModal(c);
-          } else {
-            toggleHave(c, div);
-          }
+        div.querySelector('.zoom-btn').addEventListener('click', (e)=>{
+          e.stopPropagation();
+          openModal(c);
         });
+        div.addEventListener('click', ()=> toggleHave(c, div));
         grid.appendChild(div);
         visibleCount++;
       });
@@ -291,7 +298,7 @@
       const totalPages = Math.ceil(d.cards.length/9);
       document.getElementById('setSub').innerHTML =
         `${d.cards.length} cards · ${totalPages} binder pages (9-pocket) · Released ${d.release_date}<br>` +
-        `Tap an image to enlarge. Tap the card name area to mark "have" — saved on this device.`;
+        `<b>Tap any card to mark "have"</b> (turns green ✓). Tap 🔍 to enlarge. Saves on this device.`;
       render();
     })
     .catch(err=>{
