@@ -129,14 +129,19 @@
         <div class="grid">`;
       sets.forEach(s=>{
         const got = getProgress(s.id);
-        const total = s.total_cards || 0;
-        const pct = total ? Math.round(got/total*100) : 0;
+        const cards = s.total_cards || 0;
+        const slots = s.total_slots || cards;
+        const pct = slots ? Math.round(got/slots*100) : 0;
+        const cardSuffix = (slots !== cards) ? ` (${cards} cards)` : '';
         const progBar = got > 0
-          ? `<div class="set-tile-progress"><strong>${got}</strong>/${total} slotted (${pct}%)</div>`
+          ? `<div class="set-tile-progress"><strong>${got}</strong>/${slots} slotted (${pct}%)${cardSuffix}</div>`
           : '';
+        const metaLine = (slots !== cards)
+          ? `${slots} slots · ${cards} cards · ${s.release_date || ''}`
+          : `${cards} cards · ${s.release_date || ''}`;
         html += `<a class="set-tile" href="binder.html?set=${s.id}">
           <div class="set-tile-name">${s.name}</div>
-          <div class="set-tile-meta">${total} cards · ${s.release_date || ''}</div>
+          <div class="set-tile-meta">${metaLine}</div>
           ${progBar}
         </a>`;
       });

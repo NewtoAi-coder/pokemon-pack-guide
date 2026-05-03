@@ -94,6 +94,48 @@
     color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .slot-rarity { color: #777; font-size: 0.65rem; }
+  .variant-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 3px;
+    font-size: 0.62rem;
+    font-weight: 600;
+    margin-right: 5px;
+    letter-spacing: 0.02em;
+    vertical-align: 1px;
+  }
+  .variant-badge.normal { background: #1a2638; border-color: #4a9eff66; color: #88bdff; }
+  .variant-badge.holofoil { background: #38301a; border-color: #ffd24a66; color: #ffd966; }
+  .variant-badge.reverseHolo { background: #1a3024; border-color: #4ade8066; color: #86efac; }
+  .modal-info .variant-badge { font-size: 0.78rem; padding: 3px 10px; }
+  .slot-price {
+    font-size: 0.68rem; margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-variant-numeric: tabular-nums;
+  }
+  .raw-px { color: #4a9eff; font-weight: 600; }
+  .psa-px { color: #ffd24a; font-weight: 600; }
+  .psa-sep { color: #555; }
+  .modal-prices {
+    margin-top: 14px; display: inline-block;
+    background: #1a1a1a; border: 1px solid #333; border-radius: 8px;
+    padding: 10px 16px; text-align: left;
+    font-variant-numeric: tabular-nums; min-width: 220px;
+  }
+  .mp-row {
+    display: flex; justify-content: space-between; gap: 24px;
+    font-size: 0.95rem; padding: 3px 0;
+  }
+  .mp-label { color: #888; }
+  .mp-val { font-weight: 700; }
+  .grade-yes-badge {
+    margin-top: 10px; display: inline-block;
+    background: #28a745; color: #fff;
+    padding: 4px 12px; border-radius: 4px;
+    font-size: 0.85rem; font-weight: 600;
+  }
   .empty { padding: 48px; text-align: center; color: #666; }
   .modal {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
@@ -120,6 +162,7 @@
     h1 { font-size: 1.3rem; }
     .slot-meta { padding: 5px 6px; font-size: 0.68rem; }
     .slot-rarity { display: none; }
+    .slot-price .psa-sep, .slot-price .psa-px { display: none; }
   }
 </style>
 </head>
@@ -172,6 +215,48 @@
     return { page: Math.floor(idx/9)+1, slot: (idx%9)+1 };
   }
 
+  function fmtPrice(p){
+    if (p == null) return '';
+    if (p >= 1000) return '$' + Math.round(p).toLocaleString();
+    if (p >= 10) return '$' + Math.round(p);
+    return '$' + p.toFixed(2);
+  }
+
+  function escHtml(s){
+    return String(s ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+
+  function variantBadge(c){
+    if (!c.variant || !c.variantLabel) return '';
+    return `<span class="variant-badge ${c.variant}">${escHtml(c.variantLabel)}</span>`;
+  }
+
+  // Migrate older localStorage entries (bare card IDs) to the variant-aware
+  // schema. For each old ID that no longer matches a valid slot, map to the
+  // first variant (priority order: Regular -> Holo -> Reverse Holo) of that
+  // card. Existing valid IDs pass through untouched. Run once per session
+  // load; safe to re-run.
+  function migrateHave(haveSet, cards){
+    const validIds = new Set();
+    const firstVariantByCardId = {};
+    for (const c of cards){
+      validIds.add(c.id);
+      const base = c.cardId || c.id;
+      if (firstVariantByCardId[base] === undefined){
+        firstVariantByCardId[base] = c.id;
+      }
+    }
+    let migrated = 0, dropped = 0;
+    const out = new Set();
+    for (const id of haveSet){
+      if (validIds.has(id)){ out.add(id); continue; }
+      const mapped = firstVariantByCardId[id];
+      if (mapped){ out.add(mapped); migrated++; }
+      else dropped++;
+    }
+    return { migrated, dropped, set: out };
+  }
+
   function render(){
     const wrap = document.getElementById('pages');
     wrap.innerHTML = '';
@@ -199,10 +284,12 @@
       const sec = document.createElement('div');
       sec.className = 'page-section';
       const pageHaveCount = pageCards.filter(c=>have.has(c.id)).length;
+      const firstN = pageCards[0].n, lastN = pageCards[pageCards.length-1].n;
+      const range = firstN === lastN ? `#${firstN}` : `#${firstN}–#${lastN}`;
       sec.innerHTML = `
         <div class="page-header">
           <div class="page-title">Binder Page ${p+1}</div>
-          <div class="page-meta">Cards #${pageCards[0].n}–#${pageCards[pageCards.length-1].n} · ${pageHaveCount}/${pageCards.length} slotted</div>
+          <div class="page-meta">Cards ${range} · ${pageHaveCount}/${pageCards.length} slotted</div>
         </div>
         <div class="grid"></div>
       `;
@@ -212,15 +299,20 @@
         const div = document.createElement('div');
         div.className = 'slot' + (have.has(c.id) ? ' have' : '');
         div.dataset.id = c.id;
+        const priceHtml = (c.raw != null) ? `
+            <div class="slot-price">
+              <span class="raw-px">${fmtPrice(c.raw)}</span>${c.psa10 ? `<span class="psa-sep"> · </span><span class="psa-px">PSA10 ${fmtPrice(c.psa10)}</span>` : ''}
+            </div>` : '';
+        const rarityLine = `${variantBadge(c)}${escHtml(c.rarity || '')}`;
         div.innerHTML = `
           <div class="slot-img-wrap">
             <button class="zoom-btn" title="Enlarge">🔍</button>
-            <img class="slot-img" src="${c.img}" alt="${c.name}" loading="lazy">
+            <img class="slot-img" src="${c.img}" alt="${escHtml(c.name)}" loading="lazy">
           </div>
           <div class="slot-meta">
-            <div><span class="slot-num">#${c.n}</span> · slot ${slotIdx}</div>
-            <div class="slot-name">${c.name}</div>
-            <div class="slot-rarity">${c.rarity || ''}</div>
+            <div><span class="slot-num">#${escHtml(c.n)}</span> · slot ${slotIdx}</div>
+            <div class="slot-name">${escHtml(c.name)}</div>
+            <div class="slot-rarity">${rarityLine}</div>${priceHtml}
           </div>
         `;
         div.querySelector('.zoom-btn').addEventListener('click', (e)=>{
@@ -254,7 +346,9 @@
         const p = parseInt(pageNumMatch[1])-1;
         const pageCards = setData.cards.slice(p*9, p*9+9);
         const cnt = pageCards.filter(x=>have.has(x.id)).length;
-        meta.textContent = `Cards #${pageCards[0].n}–#${pageCards[pageCards.length-1].n} · ${cnt}/${pageCards.length} slotted`;
+        const firstN = pageCards[0].n, lastN = pageCards[pageCards.length-1].n;
+        const range = firstN === lastN ? `#${firstN}` : `#${firstN}–#${lastN}`;
+        meta.textContent = `Cards ${range} · ${cnt}/${pageCards.length} slotted`;
       }
     }
   }
@@ -269,7 +363,14 @@
   function openModal(c){
     document.getElementById('modalImg').src = c.large || c.img;
     document.getElementById('modalImg').alt = c.name;
-    document.getElementById('modalInfo').innerHTML = `<span class="num">#${c.n}</span> · ${c.name} · ${c.rarity || ''}`;
+    const pricesHtml = (c.raw != null) ? `
+      <div class="modal-prices">
+        <div class="mp-row"><span class="mp-label">Raw</span><span class="mp-val raw-px">$${c.raw.toFixed(2)}</span></div>
+        ${c.psa10 != null ? `<div class="mp-row"><span class="mp-label">PSA 10</span><span class="mp-val psa-px">$${c.psa10.toFixed(2)}</span></div>` : ''}
+        ${c.grade_worthy ? '<div class="grade-yes-badge">Worth Grading</div>' : ''}
+      </div>` : '';
+    const headLine = `<span class="num">#${escHtml(c.n)}</span> · ${escHtml(c.name)}${c.variant ? ' ' + variantBadge(c) : ''}${c.rarity ? ' · ' + escHtml(c.rarity) : ''}`;
+    document.getElementById('modalInfo').innerHTML = headLine + pricesHtml;
     document.getElementById('modal').classList.add('open');
   }
   document.getElementById('modalClose').onclick = ()=> document.getElementById('modal').classList.remove('open');
@@ -293,11 +394,21 @@
     .then(r=>{ if (!r.ok) throw new Error('No data for set: '+setId); return r.json(); })
     .then(d=>{
       setData = d;
+      // One-time migration for users who slotted cards before variant tracking.
+      const result = migrateHave(have, d.cards);
+      if (result.migrated > 0 || result.dropped > 0){
+        have = result.set;
+        saveHave();
+      }
       document.title = d.name + ' Binder — Pokemon Pack Guide';
       document.getElementById('setName').textContent = d.name + ' — Master Set Binder';
       const totalPages = Math.ceil(d.cards.length/9);
+      const uniqueCards = new Set(d.cards.map(c => c.cardId || c.id)).size;
+      const slotSummary = (uniqueCards === d.cards.length)
+        ? `${d.cards.length} cards`
+        : `${d.cards.length} slots (${uniqueCards} cards · variants tracked separately)`;
       document.getElementById('setSub').innerHTML =
-        `${d.cards.length} cards · ${totalPages} binder pages (9-pocket) · Released ${d.release_date}<br>` +
+        `${slotSummary} · ${totalPages} binder pages (9-pocket) · Released ${d.release_date}<br>` +
         `<b>Tap any card to mark "have"</b> (turns green ✓). Tap 🔍 to enlarge. Saves on this device.`;
       render();
     })
