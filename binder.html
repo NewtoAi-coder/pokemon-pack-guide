@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binder Mode — Pokemon Pack Guide</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0a0a;
+    color: #fff;
+    padding: 16px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  header { text-align: center; padding: 16px 0 24px; border-bottom: 2px solid #333; margin-bottom: 24px; }
+  h1 { font-size: 1.6rem; margin-bottom: 6px; }
+  .sub { color: #888; font-size: 0.9rem; line-height: 1.5; }
+  .sub a { color: #4a9eff; text-decoration: none; }
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    margin-bottom: 16px; padding: 12px; background: #1a1a1a;
+    border: 1px solid #333; border-radius: 10px;
+  }
+  .controls input[type=search] {
+    flex: 1; min-width: 160px; padding: 10px 12px;
+    background: #0a0a0a; border: 1px solid #333; border-radius: 6px;
+    color: #fff; font-size: 0.95rem;
+  }
+  .controls button {
+    padding: 10px 14px; background: #2a2a2a; border: 1px solid #444;
+    border-radius: 6px; color: #fff; cursor: pointer; font-size: 0.85rem;
+  }
+  .controls button:hover { background: #3a3a3a; }
+  .controls button.active { background: #4a9eff; border-color: #4a9eff; }
+  .progress {
+    color: #aaa; font-size: 0.85rem; margin-left: auto; font-variant-numeric: tabular-nums;
+  }
+  .progress strong { color: #4ade80; }
+  .page-section {
+    margin-bottom: 32px;
+    padding: 16px; padding-top: 12px;
+    background: #111; border: 1px solid #2a2a2a; border-radius: 12px;
+  }
+  .page-header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-bottom: 10px; margin-bottom: 12px; border-bottom: 1px dashed #333;
+  }
+  .page-title { font-size: 1.05rem; font-weight: 600; color: #4a9eff; }
+  .page-meta { color: #666; font-size: 0.8rem; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .slot {
+    background: #1a1a1a; border: 2px solid #2a2a2a; border-radius: 8px;
+    overflow: hidden; cursor: pointer; position: relative;
+    transition: border-color .15s;
+  }
+  .slot.have { border-color: #4ade80; background: #0f1f15; }
+  .slot.have .slot-img { opacity: 1; }
+  .slot-img-wrap {
+    position: relative; aspect-ratio: 245/342; background: #0a0a0a;
+  }
+  .slot-img {
+    width: 100%; height: 100%; object-fit: contain;
+    opacity: 0.65; transition: opacity .15s;
+  }
+  .slot.have::after {
+    content: '✓'; position: absolute; top: 6px; right: 6px;
+    width: 22px; height: 22px; line-height: 22px; text-align: center;
+    background: #4ade80; color: #0a0a0a; border-radius: 50%;
+    font-weight: 800; font-size: 0.85rem;
+  }
+  .slot-meta {
+    padding: 6px 8px; background: #1a1a1a;
+    font-size: 0.72rem; line-height: 1.25;
+  }
+  .slot-num {
+    color: #4a9eff; font-weight: 700; font-variant-numeric: tabular-nums;
+  }
+  .slot-name {
+    color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .slot-rarity { color: #777; font-size: 0.65rem; }
+  .empty { padding: 48px; text-align: center; color: #666; }
+  .modal {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+    z-index: 100; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal.open { display: flex; }
+  .modal-content {
+    max-width: 500px; width: 100%; text-align: center;
+  }
+  .modal-content img { max-width: 100%; max-height: 75vh; border-radius: 12px; }
+  .modal-info { margin-top: 14px; color: #ddd; }
+  .modal-info .num { color: #4a9eff; font-weight: 700; }
+  .modal-close {
+    position: absolute; top: 16px; right: 16px;
+    width: 40px; height: 40px; background: #1a1a1a; border: 1px solid #333;
+    border-radius: 50%; color: #fff; font-size: 1.2rem; cursor: pointer;
+  }
+  @media (min-width: 700px) {
+    .grid { gap: 12px; }
+    .slot-meta { font-size: 0.8rem; padding: 8px 10px; }
+  }
+  @media (max-width: 480px) {
+    body { padding: 10px; }
+    h1 { font-size: 1.3rem; }
+    .slot-meta { padding: 5px 6px; font-size: 0.68rem; }
+    .slot-rarity { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1 id="setName">Loading…</h1>
+    <div class="sub" id="setSub"></div>
+    <div class="sub" style="margin-top:6px;"><a href="index.html">← All sets</a></div>
+  </header>
+
+  <div class="controls">
+    <input type="search" id="search" placeholder="Search by name or number…" />
+    <button id="filterAll" class="active" data-filter="all">All</button>
+    <button id="filterHave" data-filter="have">Have</button>
+    <button id="filterNeed" data-filter="need">Need</button>
+    <button id="resetBtn" title="Clear all checked">Reset</button>
+    <div class="progress" id="progress"></div>
+  </div>
+
+  <div id="pages"></div>
+</div>
+
+<div class="modal" id="modal">
+  <button class="modal-close" id="modalClose">×</button>
+  <div class="modal-content">
+    <img id="modalImg" src="" alt="">
+    <div class="modal-info" id="modalInfo"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const params = new URLSearchParams(location.search);
+  const setId = params.get('set') || 'base1';
+  const STORAGE_KEY = 'binder_have_' + setId;
+
+  let have = new Set();
+  try { have = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')); } catch(e){}
+
+  let setData = null;
+  let filter = 'all';
+  let query = '';
+
+  function saveHave(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...have]));
+  }
+
+  function pageOfSlot(idx){ // 0-based card index -> 1-based page, 1-based slot
+    return { page: Math.floor(idx/9)+1, slot: (idx%9)+1 };
+  }
+
+  function render(){
+    const wrap = document.getElementById('pages');
+    wrap.innerHTML = '';
+    if (!setData) return;
+
+    const cards = setData.cards;
+    const totalPages = Math.ceil(cards.length / 9);
+    const q = query.trim().toLowerCase();
+
+    let visibleCount = 0;
+    for (let p=0; p<totalPages; p++){
+      const pageCards = cards.slice(p*9, p*9+9);
+      // filter
+      const shown = pageCards.filter(c=>{
+        const has = have.has(c.id);
+        if (filter==='have' && !has) return false;
+        if (filter==='need' && has) return false;
+        if (q){
+          if (!c.name.toLowerCase().includes(q) && c.n != q) return false;
+        }
+        return true;
+      });
+      if (shown.length===0) continue;
+
+      const sec = document.createElement('div');
+      sec.className = 'page-section';
+      const pageHaveCount = pageCards.filter(c=>have.has(c.id)).length;
+      sec.innerHTML = `
+        <div class="page-header">
+          <div class="page-title">Binder Page ${p+1}</div>
+          <div class="page-meta">Cards #${pageCards[0].n}–#${pageCards[pageCards.length-1].n} · ${pageHaveCount}/${pageCards.length} slotted</div>
+        </div>
+        <div class="grid"></div>
+      `;
+      const grid = sec.querySelector('.grid');
+      shown.forEach(c=>{
+        const slotIdx = pageCards.indexOf(c)+1;
+        const div = document.createElement('div');
+        div.className = 'slot' + (have.has(c.id) ? ' have' : '');
+        div.dataset.id = c.id;
+        div.innerHTML = `
+          <div class="slot-img-wrap">
+            <img class="slot-img" src="${c.img}" alt="${c.name}" loading="lazy">
+          </div>
+          <div class="slot-meta">
+            <div><span class="slot-num">#${c.n}</span> · slot ${slotIdx}</div>
+            <div class="slot-name">${c.name}</div>
+            <div class="slot-rarity">${c.rarity || ''}</div>
+          </div>
+        `;
+        div.addEventListener('click', (e)=>{
+          // tap meta area = toggle have; tap image = open modal
+          if (e.target.closest('.slot-img-wrap')) {
+            openModal(c);
+          } else {
+            toggleHave(c, div);
+          }
+        });
+        grid.appendChild(div);
+        visibleCount++;
+      });
+      wrap.appendChild(sec);
+    }
+
+    if (visibleCount===0){
+      wrap.innerHTML = '<div class="empty">No cards match.</div>';
+    }
+    updateProgress();
+  }
+
+  function toggleHave(c, div){
+    if (have.has(c.id)){ have.delete(c.id); div.classList.remove('have'); }
+    else { have.add(c.id); div.classList.add('have'); }
+    saveHave();
+    updateProgress();
+    // update page header counts on the parent
+    const sec = div.closest('.page-section');
+    if (sec){
+      const meta = sec.querySelector('.page-meta');
+      const pageNumMatch = sec.querySelector('.page-title').textContent.match(/Page (\d+)/);
+      if (pageNumMatch){
+        const p = parseInt(pageNumMatch[1])-1;
+        const pageCards = setData.cards.slice(p*9, p*9+9);
+        const cnt = pageCards.filter(x=>have.has(x.id)).length;
+        meta.textContent = `Cards #${pageCards[0].n}–#${pageCards[pageCards.length-1].n} · ${cnt}/${pageCards.length} slotted`;
+      }
+    }
+  }
+
+  function updateProgress(){
+    const total = setData.cards.length;
+    const got = setData.cards.filter(c=>have.has(c.id)).length;
+    const pct = total ? Math.round(got/total*100) : 0;
+    document.getElementById('progress').innerHTML = `<strong>${got}</strong>/${total} (${pct}%)`;
+  }
+
+  function openModal(c){
+    document.getElementById('modalImg').src = c.large || c.img;
+    document.getElementById('modalImg').alt = c.name;
+    document.getElementById('modalInfo').innerHTML = `<span class="num">#${c.n}</span> · ${c.name} · ${c.rarity || ''}`;
+    document.getElementById('modal').classList.add('open');
+  }
+  document.getElementById('modalClose').onclick = ()=> document.getElementById('modal').classList.remove('open');
+  document.getElementById('modal').onclick = (e)=>{ if (e.target.id==='modal') e.target.classList.remove('open'); };
+
+  document.querySelectorAll('.controls button[data-filter]').forEach(b=>{
+    b.onclick = ()=>{
+      filter = b.dataset.filter;
+      document.querySelectorAll('.controls button[data-filter]').forEach(x=>x.classList.toggle('active', x===b));
+      render();
+    };
+  });
+  document.getElementById('search').oninput = (e)=>{ query = e.target.value; render(); };
+  document.getElementById('resetBtn').onclick = ()=>{
+    if (confirm('Clear all slotted cards for this set?')){
+      have.clear(); saveHave(); render();
+    }
+  };
+
+  fetch('data/binder/' + setId + '.json')
+    .then(r=>{ if (!r.ok) throw new Error('No data for set: '+setId); return r.json(); })
+    .then(d=>{
+      setData = d;
+      document.title = d.name + ' Binder — Pokemon Pack Guide';
+      document.getElementById('setName').textContent = d.name + ' — Master Set Binder';
+      const totalPages = Math.ceil(d.cards.length/9);
+      document.getElementById('setSub').innerHTML =
+        `${d.cards.length} cards · ${totalPages} binder pages (9-pocket) · Released ${d.release_date}<br>` +
+        `Tap an image to enlarge. Tap the card name area to mark "have" — saved on this device.`;
+      render();
+    })
+    .catch(err=>{
+      document.getElementById('setName').textContent = 'Set not found';
+      document.getElementById('setSub').textContent = err.message;
+    });
+})();
+</script>
+</body>
+</html>
