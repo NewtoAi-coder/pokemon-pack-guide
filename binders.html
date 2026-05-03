@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>All Master Set Binders — Pokemon Pack Guide</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0a0a; color: #fff; padding: 16px;
+  }
+  .container { max-width: 1100px; margin: 0 auto; }
+  header {
+    text-align: center; padding: 20px 0; border-bottom: 2px solid #333; margin-bottom: 24px;
+  }
+  h1 { font-size: 1.8rem; margin-bottom: 6px; }
+  .sub { color: #888; font-size: 0.9rem; }
+  .sub a { color: #4a9eff; text-decoration: none; }
+  .controls {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    margin-bottom: 20px; padding: 12px; background: #1a1a1a;
+    border: 1px solid #333; border-radius: 10px;
+  }
+  .controls input[type=search] {
+    flex: 1; min-width: 200px; padding: 10px 12px;
+    background: #0a0a0a; border: 1px solid #333; border-radius: 6px;
+    color: #fff; font-size: 0.95rem;
+  }
+  .stats { color: #aaa; font-size: 0.85rem; margin-left: auto; }
+  .stats strong { color: #4ade80; }
+  .series-section { margin-bottom: 28px; }
+  .series-title {
+    font-size: 1.15rem; font-weight: 600; color: #4a9eff;
+    padding: 8px 0; margin-bottom: 12px; border-bottom: 1px dashed #333;
+  }
+  .series-title .count { color: #666; font-size: 0.85rem; font-weight: 400; margin-left: 8px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+  }
+  .set-tile {
+    display: block; padding: 12px; background: #1a1a1a;
+    border: 1px solid #2a2a2a; border-radius: 8px;
+    color: #fff; text-decoration: none;
+    transition: border-color .15s, transform .15s;
+  }
+  .set-tile:hover { border-color: #4a9eff; transform: translateY(-2px); }
+  .set-tile-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
+  .set-tile-meta { color: #888; font-size: 0.78rem; line-height: 1.4; }
+  .set-tile-progress {
+    margin-top: 8px; padding-top: 8px; border-top: 1px solid #2a2a2a;
+    font-size: 0.75rem; color: #666; font-variant-numeric: tabular-nums;
+  }
+  .set-tile-progress strong { color: #4ade80; }
+  .empty { padding: 40px; text-align: center; color: #666; }
+  .loading { padding: 40px; text-align: center; color: #888; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>📖 All Master Set Binders</h1>
+    <div class="sub">Number-ordered checklists for every Pokémon set. 9-pocket binder layout.</div>
+    <div class="sub" style="margin-top:6px;"><a href="index.html">← Back to set database</a></div>
+  </header>
+  <div class="controls">
+    <input type="search" id="search" placeholder="Search by set name or series…">
+    <div class="stats" id="stats">Loading…</div>
+  </div>
+  <div id="content" class="loading">Loading binder library…</div>
+</div>
+<script>
+(function(){
+  let manifest = null;
+  let query = '';
+
+  // load all per-set progress from localStorage
+  function getProgress(sid){
+    try {
+      const arr = JSON.parse(localStorage.getItem('binder_have_'+sid) || '[]');
+      return arr.length;
+    } catch(e){ return 0; }
+  }
+
+  const SERIES_ORDER = [
+    'Mega Evolution','Scarlet & Violet','Sword & Shield','Sun & Moon','XY','Black & White',
+    'HeartGold & SoulSilver','Platinum','Diamond & Pearl','EX','E-Card','Neo','Gym','Base',
+    'POP','Other'
+  ];
+
+  function render(){
+    const wrap = document.getElementById('content');
+    wrap.classList.remove('loading');
+    if (!manifest){ wrap.textContent = 'Failed to load.'; return; }
+
+    const q = query.trim().toLowerCase();
+    const filtered = manifest.sets.filter(s=>{
+      if (!q) return true;
+      return s.name.toLowerCase().includes(q) || (s.series||'').toLowerCase().includes(q);
+    });
+
+    // group by series
+    const groups = {};
+    filtered.forEach(s=>{
+      const k = s.series || 'Other';
+      (groups[k] = groups[k] || []).push(s);
+    });
+    // sort sets within each series by release_date desc
+    Object.values(groups).forEach(arr=> arr.sort((a,b)=> (b.release_date||'').localeCompare(a.release_date||'')));
+
+    // ordered series
+    const orderedSeries = [
+      ...SERIES_ORDER.filter(k=> groups[k]),
+      ...Object.keys(groups).filter(k=> !SERIES_ORDER.includes(k)).sort(),
+    ];
+
+    if (orderedSeries.length === 0){
+      wrap.innerHTML = '<div class="empty">No matching sets.</div>';
+      return;
+    }
+
+    let html = '';
+    orderedSeries.forEach(series=>{
+      const sets = groups[series];
+      html += `<div class="series-section">
+        <div class="series-title">${series}<span class="count">${sets.length} ${sets.length===1?'set':'sets'}</span></div>
+        <div class="grid">`;
+      sets.forEach(s=>{
+        const got = getProgress(s.id);
+        const total = s.total_cards || 0;
+        const pct = total ? Math.round(got/total*100) : 0;
+        const progBar = got > 0
+          ? `<div class="set-tile-progress"><strong>${got}</strong>/${total} slotted (${pct}%)</div>`
+          : '';
+        html += `<a class="set-tile" href="binder.html?set=${s.id}">
+          <div class="set-tile-name">${s.name}</div>
+          <div class="set-tile-meta">${total} cards · ${s.release_date || ''}</div>
+          ${progBar}
+        </a>`;
+      });
+      html += `</div></div>`;
+    });
+    wrap.innerHTML = html;
+
+    // stats
+    const totalSets = manifest.sets.length;
+    const startedSets = manifest.sets.filter(s=> getProgress(s.id) > 0).length;
+    document.getElementById('stats').innerHTML = `<strong>${totalSets}</strong> binders · ${startedSets} started`;
+  }
+
+  document.getElementById('search').oninput = (e)=>{ query = e.target.value; render(); };
+
+  fetch('data/binder/_manifest.json')
+    .then(r=>{ if (!r.ok) throw new Error('manifest not found'); return r.json(); })
+    .then(d=>{ manifest = d; render(); })
+    .catch(err=>{
+      document.getElementById('content').innerHTML =
+        '<div class="empty">Binder library is still being generated. Check back in a few minutes.</div>';
+    });
+})();
+</script>
+</body>
+</html>
