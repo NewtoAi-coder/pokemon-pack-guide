@@ -6,10 +6,9 @@ is safe to re-run any time. Targets ROOT only (the deployed directory,
 served via GitHub Pages); the legacy site/ folder is untouched.
 
 Currently using Cloudflare Web Analytics (free, no cookies, no consent
-banner needed). Sign up at cloudflare.com/web-analytics and register
-this site to get a token. Replace CF_TOKEN_PLACEHOLDER below with your
-real token, then re-run this script — the marker check will skip files
-that already have the snippet, so it's safe.
+banner needed). The token is baked into ANALYTICS_SNIPPET below — to
+rotate it, edit the constant and re-run. The marker check will skip
+files that already have the snippet, so this is safe to re-run any time.
 
 If you change providers, update both ANALYTICS_SNIPPET and
 ANALYTICS_MARKER here AND the embedded snippet in
@@ -25,7 +24,7 @@ ROOT = Path(__file__).resolve().parent.parent
 # cloudflare.com/web-analytics → your site → "JS snippet" tab.
 ANALYTICS_SNIPPET = (
     '<script defer src="https://static.cloudflareinsights.com/beacon.min.js" '
-    'data-cf-beacon=\'{"token":"CF_TOKEN_PLACEHOLDER"}\'></script>'
+    'data-cf-beacon=\'{"token":"12a7741b0e664f26a9670c00d353d038"}\'></script>'
 )
 # Stable substring used to detect prior installation (re-run safety).
 ANALYTICS_MARKER = "cloudflareinsights.com/beacon"
@@ -68,11 +67,7 @@ def main():
     if counts["added"] == 0 and counts["skip"] > 0:
         print("\nNothing to do — every page is already instrumented.")
     elif counts["added"] > 0:
-        print(
-            "\nNOTE: Replace CF_TOKEN_PLACEHOLDER with your real Cloudflare\n"
-            "      token (from cloudflare.com/web-analytics) and re-run.\n"
-            "      Or sed -i '' 's/CF_TOKEN_PLACEHOLDER/<your-token>/g' *.html"
-        )
+        print("\nDone — analytics tag injected.")
 
 
 if __name__ == "__main__":
