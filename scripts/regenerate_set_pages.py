@@ -149,6 +149,7 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
         }}
         .back-link:hover {{ background: #444; }}
     </style>
+    <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{{"token":"CF_TOKEN_PLACEHOLDER"}}'></script>
 </head>
 <body>
     <div class="container">
