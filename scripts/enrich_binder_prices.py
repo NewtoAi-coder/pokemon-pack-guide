@@ -49,8 +49,15 @@ GRADE_RAW_THRESHOLD = 50.0
 
 # Map raw tcgplayer key -> (normalized_variant_key, human_label, sort_order)
 # Order is the canonical master-set checklist order.
+#
+# Vintage sets (Jungle, Fossil, Gym, Neo, etc.) use "unlimited" instead of
+# "normal" for non-holo prints — same physical print, just a different
+# pokemontcg.io key. Both fold to the "normal" / "Regular" variant.
+# 1st-Edition keys are deliberately excluded — different collectible category,
+# and 1st-Ed prices would heavily skew Unlimited-tracking users' totals.
 VARIANT_MAP = {
     "normal":            ("normal",       "Regular",      0),
+    "unlimited":         ("normal",       "Regular",      0),
     "holofoil":          ("holofoil",     "Holo",         1),
     "unlimitedHolofoil": ("holofoil",     "Holo",         1),
     "reverseHolofoil":   ("reverseHolo",  "Reverse Holo", 2),

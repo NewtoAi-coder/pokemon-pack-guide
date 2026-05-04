@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
 """Rarity-based chase-card augmentation for top_cards in sets.json.
 
-Why this exists: fetch-sets.py builds top_cards by filtering on
-tcgplayer.market > 0. Brand-new sets (Mega Evolution era) often have
-card entries on pokemontcg.io but no tcgplayer market price yet, so
-they end up with empty or near-empty top_cards arrays — and the home
-page shows misleadingly low chase counts (0 or 2) even though the set
-obviously contains many alt arts, Mega ex hits, secret rares.
+Why this exists: brand-new sets (Mega Evolution era) often have card
+entries on pokemontcg.io but no tcgplayer market price yet, so they
+end up with empty or sparse top_cards arrays — and the home page shows
+misleadingly low chase counts even though the set obviously contains
+many alt arts, Mega ex hits, secret rares.
 
 For every set, this script fetches all cards whose rarity matches a
 chase tier (Special Illustration Rare, Hyper Rare, Mega Hyper Rare,
 Ultra Rare, Illustration Rare, Secret Rare, Mega Rare, Double Rare).
-If `rarity_count > priced_count` for that set, it merges the rarity
-candidates INTO the existing top_cards (priced entries first, sorted by
-raw_value desc; rarity additions follow, sorted by tier priority,
-deduped by card number). Already-rich sets are untouched.
+If priced_count is BELOW SPARSE_PRICED_THRESHOLD, it merges rarity
+candidates INTO existing top_cards (priced entries first by raw_value
+desc; rarity additions follow by tier priority, deduped by card
+number). Sets that already have a healthy priced leaderboard from
+refresh_top_cards.py are untouched — their tail entries would otherwise
+get misleading "pricing_pending" tags despite having real prices below
+the top-N cutoff.
 
 Each rarity-fallback entry carries `pricing_pending: true` so downstream
 consumers can distinguish them from real priced chase cards.
@@ -51,6 +53,12 @@ RARITY_TIERS = [
     "Ultra Rare",
     "Double Rare",   # modern ex/V tier — meaningful cards even without prices
 ]
+
+# Trigger threshold: only run the rarity merge when a set has fewer than
+# this many priced top_cards. Sets that already got a healthy 30+ priced
+# leaderboard from refresh_top_cards.py are skipped so we don't tag their
+# real-priced tail with misleading "pricing_pending" labels.
+SPARSE_PRICED_THRESHOLD = 30
 RARITY_PRIORITY = {r.lower(): i for i, r in enumerate(RARITY_TIERS)}
 RARITY_LOWERCASE = set(RARITY_PRIORITY)
 
@@ -186,11 +194,17 @@ def merge_top_cards(current, rarity_cards):
 
     Returns (merged_list, priced_count, additions_count). Priced entries lead
     (sorted by raw_value desc), then rarity additions (sorted by tier priority,
-    then number). Returns None if no merge is warranted (rarity_n <= priced_n).
+    then number).
+
+    Skips the merge entirely when the set already has SPARSE_PRICED_THRESHOLD+
+    priced cards — that's a refreshed leaderboard with real chase data, and
+    appending pricing_pending entries below the top would mislead users.
     """
     priced = [c for c in current if is_priced(c)]
     priced_n = len(priced)
     rarity_n = len(rarity_cards)
+    if priced_n >= SPARSE_PRICED_THRESHOLD:
+        return None
     if rarity_n <= priced_n:
         return None
     priced_numbers = {str(c.get("number")) for c in priced if c.get("number") is not None}
