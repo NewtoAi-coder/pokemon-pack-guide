@@ -122,6 +122,67 @@ def variants_for_card(tcg_prices):
     return sorted(by_key.values(), key=lambda x: x["order"])
 
 
+# Rarity tiers we treat as single-print (no Reverse Holo variant exists).
+# Most modern "premium" rarities are holographic-only collectibles.
+_SINGLE_PRINT_RARITIES = {
+    "double rare",
+    "ultra rare",
+    "illustration rare",
+    "special illustration rare",
+    "hyper rare",
+    "secret rare",
+    "mega rare",
+    "mega hyper rare",
+    # Older/equivalent tiers that print holo-only with no reverse counterpart
+    "rare ultra", "rare secret", "rare rainbow",
+    "rare holo gx", "rare holo v", "rare holo vmax", "rare holo vstar",
+    "rare holo ex", "rare break", "rare prism star",
+    "rare ace", "rare shining", "rare radiant",
+    "rare prime", "rare legend",
+    "amazing rare", "trainer gallery rare holo", "radiant rare",
+}
+
+
+def variants_for_rarity(rarity):
+    """Infer master-set variants from card rarity when tcgplayer has no
+    pricing data. Used as fallback for brand-new sets (me3, me2pt5) where
+    tcgplayer hasn't backfilled variant prices yet.
+
+    Returns list of variant dicts with raw=None (price unknown), same
+    shape as variants_for_card output. Empty list = no inference made,
+    falls through to a single unpriced slot.
+    """
+    if not rarity:
+        return []
+    r = rarity.strip().lower()
+    if not r:
+        return []
+
+    # Single-print tiers: one slot, holofoil-style print
+    if r in _SINGLE_PRINT_RARITIES:
+        return [{
+            "variant": "holofoil", "variantLabel": "Holo", "order": 1, "raw": None,
+        }]
+
+    # Rare Holo: holographic primary print + reverse holo
+    if r == "rare holo":
+        return [
+            {"variant": "holofoil",    "variantLabel": "Holo",         "order": 1, "raw": None},
+            {"variant": "reverseHolo", "variantLabel": "Reverse Holo", "order": 2, "raw": None},
+        ]
+
+    # Common, Uncommon, plain Rare: regular print + reverse holo print
+    if r in ("common", "uncommon", "rare"):
+        return [
+            {"variant": "normal",      "variantLabel": "Regular",      "order": 0, "raw": None},
+            {"variant": "reverseHolo", "variantLabel": "Reverse Holo", "order": 2, "raw": None},
+        ]
+
+    # Unrecognized rarity (e.g. "Promo", "Code Card"): no inference,
+    # caller falls through to a single unpriced slot.
+    return []
+
+
 def number_sort_key(n):
     """Stable sort for card.number: numeric where possible, alpha-numeric fallback."""
     if not n:
@@ -135,7 +196,13 @@ def number_sort_key(n):
 
 
 def build_slot(base_card, variant, multi):
-    """Build a single slot entry from an existing card record + variant info."""
+    """Build a single slot entry from an existing card record + variant info.
+
+    Handles two cases:
+    - Real tcgplayer-priced variant: raw is a float, derive psa10 + grade_worthy.
+    - Rarity-inferred variant: raw is None (price unknown), all price fields
+      become null. Slot still renders correctly in binder.html (no price line).
+    """
     out = dict(base_card)  # copy id, n, name, rarity, img, large, types, supertype
     out.pop("raw", None)
     out.pop("psa10", None)
@@ -148,10 +215,15 @@ def build_slot(base_card, variant, multi):
         out["id"] = f"{base_card['id']}__{variant['variant']}"
         out["variant"] = variant["variant"]
         out["variantLabel"] = variant["variantLabel"]
-    raw = variant["raw"]
-    out["raw"] = raw
-    out["psa10"] = round(raw * PSA10_MULTIPLIER, 2)
-    out["grade_worthy"] = raw >= GRADE_RAW_THRESHOLD
+    raw = variant.get("raw")
+    if raw is None:
+        out["raw"] = None
+        out["psa10"] = None
+        out["grade_worthy"] = False
+    else:
+        out["raw"] = raw
+        out["psa10"] = round(raw * PSA10_MULTIPLIER, 2)
+        out["grade_worthy"] = raw >= GRADE_RAW_THRESHOLD
     return out
 
 
@@ -209,8 +281,16 @@ def enrich_file(path):
     new_cards = []
     multi_count = 0
     priced_slots = 0
+    rarity_inferred_slots = 0
     for bc in base_cards:
         variants = variants_for_card(tcg_by_card.get(bc["id"]))
+        from_rarity = False
+        if not variants:
+            # No tcgplayer pricing → infer variants from rarity instead.
+            # Brand-new sets (me3, me2pt5) and other gaps in tcgplayer
+            # coverage hit this path. Inferred variants carry raw=None.
+            variants = variants_for_rarity(bc.get("rarity"))
+            from_rarity = bool(variants)
         if not variants:
             new_cards.append(build_unpriced_slot(bc))
             continue
@@ -219,7 +299,10 @@ def enrich_file(path):
             multi_count += 1
         for v in variants:
             new_cards.append(build_slot(bc, v, multi))
-            priced_slots += 1
+            if from_rarity:
+                rarity_inferred_slots += 1
+            else:
+                priced_slots += 1
 
     # Sort: card number, then variant order (normal=0, holo=1, reverseHolo=2)
     variant_order = {"normal": 0, "holofoil": 1, "reverseHolo": 2}
@@ -235,7 +318,8 @@ def enrich_file(path):
         json.dump(data, f, separators=(",", ":"))
     return True, (
         f"{len(base_cards)} unique cards -> {len(new_cards)} slots "
-        f"({multi_count} multi-variant, {priced_slots}/{len(new_cards)} priced)"
+        f"({multi_count} multi-variant, {priced_slots} priced, "
+        f"{rarity_inferred_slots} rarity-inferred)"
     )
 
 
