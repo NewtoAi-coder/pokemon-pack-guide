@@ -68,13 +68,22 @@
     width: 100%; height: 100%; object-fit: contain;
     opacity: 0.65; transition: opacity .15s;
   }
-  .slot.have::after {
-    content: '✓'; position: absolute; top: 6px; right: 6px;
-    width: 26px; height: 26px; line-height: 26px; text-align: center;
-    background: #4ade80; color: #0a0a0a; border-radius: 50%;
+  .have-badge {
+    position: absolute; top: 6px; right: 6px;
+    min-width: 26px; height: 26px; line-height: 26px;
+    padding: 0 8px;
+    background: #4ade80; color: #0a0a0a;
+    border-radius: 13px;
     font-weight: 800; font-size: 1rem;
+    text-align: center;
     box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    display: none;
+    pointer-events: none;
+    z-index: 1;
+    font-variant-numeric: tabular-nums;
   }
+  .slot.have .have-badge { display: block; }
+  .have-badge.multi { font-size: 0.85rem; padding: 0 9px; }
   .zoom-btn {
     position: absolute; top: 6px; left: 6px;
     width: 28px; height: 28px; line-height: 26px; text-align: center;
@@ -210,16 +219,49 @@
   const params = new URLSearchParams(location.search);
   const setId = params.get('set') || 'base1';
   const STORAGE_KEY = 'binder_have_' + setId;
+  const QTY_CAP = 99;
+  const LONG_PRESS_MS = 500;
 
-  let have = new Set();
-  try { have = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')); } catch(e){}
+  // Schema is an object: { "<slotId>": <quantity> }. Older versions used an
+  // Array of slot IDs (binary have/not). loadHave() detects + migrates the
+  // legacy format on the fly, so users coming from older builds keep all
+  // their progress.
+  function loadHave(){
+    let raw;
+    try { raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e){ return {}; }
+    if (Array.isArray(raw)){
+      const obj = {};
+      for (const id of raw) obj[id] = 1;
+      return obj;
+    }
+    if (raw && typeof raw === 'object'){
+      const out = {};
+      for (const k in raw){
+        const v = +raw[k];
+        if (Number.isFinite(v) && v > 0) out[k] = Math.min(QTY_CAP, Math.floor(v));
+      }
+      return out;
+    }
+    return {};
+  }
+  let haveQty = loadHave();
 
   let setData = null;
   let filter = 'all';
   let query = '';
 
   function saveHave(){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...have]));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(haveQty));
+  }
+  function getQty(id){ return haveQty[id] || 0; }
+  function setQty(id, qty){
+    if (qty <= 0) delete haveQty[id];
+    else haveQty[id] = Math.min(QTY_CAP, qty);
+  }
+  function badgeText(qty){
+    if (qty <= 0) return '';
+    if (qty === 1) return '✓';
+    return '✓×' + qty;
   }
 
   function pageOfSlot(idx){ // 0-based card index -> 1-based page, 1-based slot
@@ -253,7 +295,7 @@
   // first variant (priority order: Regular -> Holo -> Reverse Holo) of that
   // card. Existing valid IDs pass through untouched. Run once per session
   // load; safe to re-run.
-  function migrateHave(haveSet, cards){
+  function migrateHave(haveObj, cards){
     const validIds = new Set();
     const firstVariantByCardId = {};
     for (const c of cards){
@@ -264,14 +306,18 @@
       }
     }
     let migrated = 0, dropped = 0;
-    const out = new Set();
-    for (const id of haveSet){
-      if (validIds.has(id)){ out.add(id); continue; }
+    const out = {};
+    for (const id in haveObj){
+      const qty = haveObj[id];
+      if (validIds.has(id)){ out[id] = qty; continue; }
       const mapped = firstVariantByCardId[id];
-      if (mapped){ out.add(mapped); migrated++; }
-      else dropped++;
+      if (mapped){
+        // If both old bare ID and a variant somehow coexist, sum the qtys
+        out[mapped] = Math.min(QTY_CAP, (out[mapped] || 0) + qty);
+        migrated++;
+      } else dropped++;
     }
-    return { migrated, dropped, set: out };
+    return { migrated, dropped, obj: out };
   }
 
   function render(){
@@ -288,9 +334,9 @@
       const pageCards = cards.slice(p*9, p*9+9);
       // filter
       const shown = pageCards.filter(c=>{
-        const has = have.has(c.id);
-        if (filter==='have' && !has) return false;
-        if (filter==='need' && has) return false;
+        const qty = getQty(c.id);
+        if (filter==='have' && qty <= 0) return false;
+        if (filter==='need' && qty > 0) return false;
         if (q){
           if (!c.name.toLowerCase().includes(q) && c.n != q) return false;
         }
@@ -300,7 +346,7 @@
 
       const sec = document.createElement('div');
       sec.className = 'page-section';
-      const pageHaveCount = pageCards.filter(c=>have.has(c.id)).length;
+      const pageHaveCount = pageCards.filter(c => getQty(c.id) > 0).length;
       const firstN = pageCards[0].n, lastN = pageCards[pageCards.length-1].n;
       const range = firstN === lastN ? `#${firstN}` : `#${firstN}–#${lastN}`;
       sec.innerHTML = `
@@ -314,16 +360,19 @@
       shown.forEach(c=>{
         const slotIdx = pageCards.indexOf(c)+1;
         const div = document.createElement('div');
-        div.className = 'slot' + (have.has(c.id) ? ' have' : '');
+        const qty = getQty(c.id);
+        div.className = 'slot' + (qty > 0 ? ' have' : '');
         div.dataset.id = c.id;
         const priceHtml = (c.raw != null) ? `
             <div class="slot-price">
               <span class="raw-px">${fmtPrice(c.raw)}</span>${c.psa10 ? `<span class="psa-sep"> · </span><span class="psa-px">PSA10 ${fmtPrice(c.psa10)}</span>` : ''}
             </div>` : '';
         const rarityLine = `${variantBadge(c)}${escHtml(c.rarity || '')}`;
+        const badgeClass = (qty >= 2) ? 'have-badge multi' : 'have-badge';
         div.innerHTML = `
           <div class="slot-img-wrap">
             <button class="zoom-btn" title="Enlarge">🔍</button>
+            <span class="${badgeClass}">${badgeText(qty)}</span>
             <img class="slot-img" src="${c.img}" alt="${escHtml(c.name)}" loading="lazy">
           </div>
           <div class="slot-meta">
@@ -336,7 +385,7 @@
           e.stopPropagation();
           openModal(c);
         });
-        div.addEventListener('click', ()=> toggleHave(c, div));
+        attachSlotHandlers(div, c);
         grid.appendChild(div);
         visibleCount++;
       });
@@ -349,30 +398,73 @@
     updateProgress();
   }
 
-  function toggleHave(c, div){
-    if (have.has(c.id)){ have.delete(c.id); div.classList.remove('have'); }
-    else { have.add(c.id); div.classList.add('have'); }
-    saveHave();
-    updateProgress();
-    // update page header counts on the parent
-    const sec = div.closest('.page-section');
-    if (sec){
-      const meta = sec.querySelector('.page-meta');
-      const pageNumMatch = sec.querySelector('.page-title').textContent.match(/Page (\d+)/);
-      if (pageNumMatch){
-        const p = parseInt(pageNumMatch[1])-1;
-        const pageCards = setData.cards.slice(p*9, p*9+9);
-        const cnt = pageCards.filter(x=>have.has(x.id)).length;
-        const firstN = pageCards[0].n, lastN = pageCards[pageCards.length-1].n;
-        const range = firstN === lastN ? `#${firstN}` : `#${firstN}–#${lastN}`;
-        meta.textContent = `Cards ${range} · ${cnt}/${pageCards.length} slotted`;
-      }
+  // Repaint a single slot's "have" state + badge after a qty change.
+  function refreshSlotVisual(div, c){
+    const qty = getQty(c.id);
+    if (qty > 0) div.classList.add('have');
+    else div.classList.remove('have');
+    const badge = div.querySelector('.have-badge');
+    if (badge){
+      badge.textContent = badgeText(qty);
+      badge.classList.toggle('multi', qty >= 2);
     }
+  }
+
+  // Recompute the page header "Cards #N–#M · X/9 slotted" line.
+  function refreshPageMeta(div){
+    const sec = div.closest('.page-section');
+    if (!sec) return;
+    const meta = sec.querySelector('.page-meta');
+    const pageNumMatch = sec.querySelector('.page-title').textContent.match(/Page (\d+)/);
+    if (!pageNumMatch) return;
+    const p = parseInt(pageNumMatch[1])-1;
+    const pageCards = setData.cards.slice(p*9, p*9+9);
+    const cnt = pageCards.filter(x => getQty(x.id) > 0).length;
+    const firstN = pageCards[0].n, lastN = pageCards[pageCards.length-1].n;
+    const range = firstN === lastN ? `#${firstN}` : `#${firstN}–#${lastN}`;
+    meta.textContent = `Cards ${range} · ${cnt}/${pageCards.length} slotted`;
+  }
+
+  // Tap to cycle qty (0 -> 1 -> 2 -> ... -> QTY_CAP).
+  // Long-press (>= LONG_PRESS_MS) resets qty to 0.
+  // Pointer Events unify mouse/touch/pen and are universally supported.
+  function attachSlotHandlers(div, c){
+    let pressTimer = null;
+    let didLongPress = false;
+    const cancel = () => {
+      if (pressTimer){ clearTimeout(pressTimer); pressTimer = null; }
+    };
+    div.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.zoom-btn')) return;
+      didLongPress = false;
+      pressTimer = setTimeout(() => {
+        pressTimer = null;
+        didLongPress = true;
+        setQty(c.id, 0);
+        saveHave();
+        refreshSlotVisual(div, c);
+        refreshPageMeta(div);
+        updateProgress();
+      }, LONG_PRESS_MS);
+    });
+    div.addEventListener('pointerup', cancel);
+    div.addEventListener('pointerleave', cancel);
+    div.addEventListener('pointercancel', cancel);
+    div.addEventListener('click', (e) => {
+      if (e.target.closest('.zoom-btn')) return;
+      if (didLongPress){ didLongPress = false; return; }
+      const cur = getQty(c.id);
+      setQty(c.id, cur + 1);
+      saveHave();
+      refreshSlotVisual(div, c);
+      refreshPageMeta(div);
+      updateProgress();
+    });
   }
 
   function updateProgress(){
     const total = setData.cards.length;
-    const got = setData.cards.filter(c=>have.has(c.id)).length;
+    const got = setData.cards.filter(c => getQty(c.id) > 0).length;
     const pct = total ? Math.round(got/total*100) : 0;
     document.getElementById('progress').innerHTML = `<strong>${got}</strong>/${total} (${pct}%)`;
     updateValueSummary();
@@ -385,7 +477,8 @@
     for (const c of setData.cards){
       if (c.raw == null) continue;
       total += c.raw;
-      if (have.has(c.id)) mine += c.raw;
+      const qty = getQty(c.id);
+      if (qty > 0) mine += c.raw * qty;  // duplicates count toward your value
     }
     if (total <= 0){
       el.style.display = 'inline-block';
@@ -425,7 +518,7 @@
   document.getElementById('search').oninput = (e)=>{ query = e.target.value; render(); };
   document.getElementById('resetBtn').onclick = ()=>{
     if (confirm('Clear all slotted cards for this set?')){
-      have.clear(); saveHave(); render();
+      haveQty = {}; saveHave(); render();
     }
   };
 
@@ -434,9 +527,9 @@
     .then(d=>{
       setData = d;
       // One-time migration for users who slotted cards before variant tracking.
-      const result = migrateHave(have, d.cards);
+      const result = migrateHave(haveQty, d.cards);
       if (result.migrated > 0 || result.dropped > 0){
-        have = result.set;
+        haveQty = result.obj;
         saveHave();
       }
       document.title = d.name + ' Binder — Pokemon Pack Guide';
@@ -448,7 +541,7 @@
         : `${d.cards.length} slots (${uniqueCards} cards · variants tracked separately)`;
       document.getElementById('setSub').innerHTML =
         `${slotSummary} · ${totalPages} binder pages (9-pocket) · Released ${d.release_date}<br>` +
-        `<b>Tap any card to mark "have"</b> (turns green ✓). Tap 🔍 to enlarge. Saves on this device.`;
+        `<b>Tap a card to add 1</b> (tap again for 2, 3…). <b>Long-press</b> to clear. Tap 🔍 to enlarge. Saves on this device.`;
       render();
     })
     .catch(err=>{

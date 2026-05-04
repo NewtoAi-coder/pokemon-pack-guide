@@ -82,18 +82,33 @@
   let manifest = null;
   let query = '';
 
-  // load all per-set progress from localStorage
-  function getProgress(sid){
-    try {
-      const arr = JSON.parse(localStorage.getItem('binder_have_'+sid) || '[]');
-      return arr.length;
-    } catch(e){ return 0; }
+  // localStorage schema: object { id: qty }. Older builds stored an Array
+  // of IDs (binary have/not). Both formats are accepted here.
+  function getHaveQty(sid){
+    let raw;
+    try { raw = JSON.parse(localStorage.getItem('binder_have_'+sid) || '{}'); } catch(e){ return {}; }
+    if (Array.isArray(raw)){
+      const obj = {};
+      for (const id of raw) obj[id] = 1;
+      return obj;
+    }
+    if (raw && typeof raw === 'object'){
+      const out = {};
+      for (const k in raw){
+        const v = +raw[k];
+        if (Number.isFinite(v) && v > 0) out[k] = v;
+      }
+      return out;
+    }
+    return {};
   }
 
-  function getHaveSet(sid){
-    try {
-      return new Set(JSON.parse(localStorage.getItem('binder_have_'+sid) || '[]'));
-    } catch(e){ return new Set(); }
+  // Number of unique slots the user has at least 1 of.
+  function getProgress(sid){
+    const q = getHaveQty(sid);
+    let n = 0;
+    for (const k in q) if (q[k] > 0) n++;
+    return n;
   }
 
   function fmtMoney(p){
@@ -202,10 +217,11 @@
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (!d) return;
-        const haveSet = getHaveSet(sid);
+        const haveQty = getHaveQty(sid);
         let mine = 0;
         for (const c of d.cards){
-          if (c.raw != null && haveSet.has(c.id)) mine += c.raw;
+          const qty = haveQty[c.id] || 0;
+          if (c.raw != null && qty > 0) mine += c.raw * qty;
         }
         yourValueCache[sid] = mine;
         paintYourValue(sid, mine);
