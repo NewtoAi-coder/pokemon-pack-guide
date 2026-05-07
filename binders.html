@@ -60,6 +60,25 @@
   }
   .set-tile-value .total-val { color: #aaa; }
   .set-tile-value .your-val { color: #4ade80; font-weight: 600; }
+  .mode-bar {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    margin-bottom: 12px; padding: 10px 12px; background: #131313;
+    border: 1px solid #2a2a2a; border-radius: 10px;
+  }
+  .mode-bar .mode-label {
+    color: #888; font-size: 0.85rem; font-weight: 600; margin-right: 4px;
+  }
+  .mode-bar .mode-btn {
+    padding: 8px 14px; background: #1a1a1a; border: 1px solid #333;
+    border-radius: 6px; color: #ddd; cursor: pointer;
+    font-size: 0.85rem; font-weight: 600;
+    transition: background .12s, border-color .12s;
+  }
+  .mode-bar .mode-btn:hover { background: #2a2a2a; }
+  .mode-bar .mode-btn.active { background: #4a9eff; border-color: #4a9eff; color: #fff; }
+  .mode-bar .mode-hint {
+    color: #666; font-size: 0.78rem; margin-left: auto; font-style: italic;
+  }
   .empty { padding: 40px; text-align: center; color: #666; }
   .loading { padding: 40px; text-align: center; color: #888; }
 </style>
@@ -72,6 +91,12 @@
     <div class="sub">Number-ordered checklists for every Pokémon set. 9-pocket binder layout.</div>
     <div class="sub" style="margin-top:6px;"><a href="index.html">← Back to set database</a></div>
   </header>
+  <div class="mode-bar">
+    <span class="mode-label">View:</span>
+    <button class="mode-btn active" data-mode="complete">Set Complete</button>
+    <button class="mode-btn" data-mode="master">Master Set</button>
+    <span class="mode-hint" id="modeHint">One of each numbered card</span>
+  </div>
   <div class="controls">
     <input type="search" id="search" placeholder="Search by set name or series…">
     <div class="stats" id="stats">Loading…</div>
@@ -82,6 +107,17 @@
 (function(){
   let manifest = null;
   let query = '';
+
+  // Directory-wide view mode. Persisted globally (separate from the per-set
+  // mode in binder.html). Default Set Complete to match binder.html — most
+  // users care about completion, not every variant.
+  const MODE_KEY = 'binders_directory_mode';
+  function loadMode(){
+    const v = localStorage.getItem(MODE_KEY);
+    return (v === 'master') ? 'master' : 'complete';
+  }
+  function saveMode(){ localStorage.setItem(MODE_KEY, mode); }
+  let mode = loadMode();
 
   // localStorage schema: object { id: qty }. Older builds stored an Array
   // of IDs (binary have/not). Both formats are accepted here.
@@ -104,12 +140,24 @@
     return {};
   }
 
-  // Number of unique slots the user has at least 1 of.
+  // Mode-aware progress count.
+  // - master: number of unique variant slots with qty > 0
+  // - complete: number of unique base card IDs (cardId before "__variant"
+  //   suffix) with at least one variant having qty > 0. Approximates
+  //   binder.html's Set Complete count without requiring a JSON load.
   function getProgress(sid){
     const q = getHaveQty(sid);
-    let n = 0;
-    for (const k in q) if (q[k] > 0) n++;
-    return n;
+    if (mode === 'master'){
+      let n = 0;
+      for (const k in q) if (q[k] > 0) n++;
+      return n;
+    }
+    const cardIds = new Set();
+    for (const k in q){
+      if (q[k] <= 0) continue;
+      cardIds.add(k.split('__')[0]);
+    }
+    return cardIds.size;
   }
 
   function fmtMoney(p){
@@ -165,16 +213,21 @@
         const cards = s.total_cards || 0;
         const slots = s.total_slots || cards;
         const totalValue = s.total_value || 0;
-        const pct = slots ? Math.round(got/slots*100) : 0;
-        const cardSuffix = (slots !== cards) ? ` (${cards} cards)` : '';
+        // Denominator + suffix depend on the active view mode.
+        const denom = (mode === 'master') ? slots : cards;
+        const pct = denom ? Math.round(got/denom*100) : 0;
+        const otherSuffix = (slots !== cards)
+          ? (mode === 'master' ? ` (${cards} cards)` : ` of ${slots} slots`)
+          : '';
         const progBar = got > 0
-          ? `<div class="set-tile-progress"><strong>${got}</strong>/${slots} slotted (${pct}%)${cardSuffix}</div>`
+          ? `<div class="set-tile-progress"><strong>${got}</strong>/${denom} (${pct}%)${otherSuffix}</div>`
           : '';
         const metaLine = (slots !== cards)
-          ? `${slots} slots · ${cards} cards · ${s.release_date || ''}`
+          ? `${cards} cards · ${slots} slots · ${s.release_date || ''}`
           : `${cards} cards · ${s.release_date || ''}`;
-        // Value line: show total when known. "Your" populated by lazy fetch
-        // for started sets only.
+        // Value line: total stays as the master-set canonical total since
+        // that's the benchmark price most collectors reference. "Your"
+        // populated by lazy fetch for started sets only.
         let valueLine = '';
         if (totalValue > 0){
           const yourSlot = (got > 0) ? `<span class="your-val" data-set-value-for="${s.id}"></span>` : '';
@@ -235,6 +288,25 @@
   }
 
   document.getElementById('search').oninput = (e)=>{ query = e.target.value; render(); };
+
+  function updateModeUI(){
+    document.querySelectorAll('.mode-bar .mode-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.mode === mode);
+    });
+    document.getElementById('modeHint').textContent =
+      (mode === 'complete') ? 'One of each numbered card' : 'Every finish variant tracked separately';
+  }
+  document.querySelectorAll('.mode-bar .mode-btn').forEach(b=>{
+    b.onclick = ()=>{
+      const next = b.dataset.mode;
+      if (next === mode) return;
+      mode = next;
+      saveMode();
+      updateModeUI();
+      render();
+    };
+  });
+  updateModeUI();
 
   fetch('data/binder/_manifest.json')
     .then(r=>{ if (!r.ok) throw new Error('manifest not found'); return r.json(); })

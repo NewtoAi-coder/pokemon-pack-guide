@@ -18,6 +18,25 @@
   h1 { font-size: 1.6rem; margin-bottom: 6px; }
   .sub { color: #888; font-size: 0.9rem; line-height: 1.5; }
   .sub a { color: #4a9eff; text-decoration: none; }
+  .mode-bar {
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    margin-bottom: 10px; padding: 10px 12px; background: #131313;
+    border: 1px solid #2a2a2a; border-radius: 10px;
+  }
+  .mode-bar .mode-label {
+    color: #888; font-size: 0.85rem; font-weight: 600; margin-right: 4px;
+  }
+  .mode-bar .mode-btn {
+    padding: 8px 14px; background: #1a1a1a; border: 1px solid #333;
+    border-radius: 6px; color: #ddd; cursor: pointer;
+    font-size: 0.85rem; font-weight: 600;
+    transition: background .12s, border-color .12s;
+  }
+  .mode-bar .mode-btn:hover { background: #2a2a2a; }
+  .mode-bar .mode-btn.active { background: #4a9eff; border-color: #4a9eff; color: #fff; }
+  .mode-bar .mode-hint {
+    color: #666; font-size: 0.78rem; margin-left: auto; font-style: italic;
+  }
   .controls {
     display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
     margin-bottom: 16px; padding: 12px; background: #1a1a1a;
@@ -195,6 +214,13 @@
     <div class="sub" style="margin-top:6px;"><a href="index.html">← All sets</a></div>
   </header>
 
+  <div class="mode-bar">
+    <span class="mode-label">View:</span>
+    <button class="mode-btn active" data-mode="complete">Set Complete</button>
+    <button class="mode-btn" data-mode="master">Master Set</button>
+    <span class="mode-hint" id="modeHint">One of each numbered card</span>
+  </div>
+
   <div class="controls">
     <input type="search" id="search" placeholder="Search by name or number…" />
     <button id="filterAll" class="active" data-filter="all">All</button>
@@ -247,9 +273,25 @@
   }
   let haveQty = loadHave();
 
+  // View mode: "complete" (one slot per numbered card, default) or "master"
+  // (every variant). Persisted per-set so users return to their last choice.
+  // New users default to Set Complete since the master set is overwhelming
+  // for casuals; veterans switch to Master Set explicitly.
+  const MODE_KEY = 'binder_mode_' + setId;
+  function loadMode(){
+    const v = localStorage.getItem(MODE_KEY);
+    return (v === 'master') ? 'master' : 'complete';
+  }
+  function saveMode(){ localStorage.setItem(MODE_KEY, mode); }
+  let mode = loadMode();
+
   let setData = null;
   let filter = 'all';
   let query = '';
+  // activeCards is the rendered list — either the full master-set list or a
+  // collapsed one-slot-per-card view for Set Complete mode. Recomputed on
+  // every mode/data change.
+  let activeCards = [];
 
   function saveHave(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(haveQty));
@@ -296,6 +338,79 @@
   // first variant (priority order: Regular -> Holo -> Reverse Holo) of that
   // card. Existing valid IDs pass through untouched. Run once per session
   // load; safe to re-run.
+  // Pick the primary variant of a card for Set Complete display. Priority:
+  // Regular (normal) > Holo (holofoil) > Reverse Holo > first sort entry.
+  // For single-variant cards (no variant tag), the lone slot wins.
+  function pickPrimaryVariant(variants){
+    if (variants.length === 1) return variants[0];
+    const byKey = {};
+    for (const v of variants){
+      byKey[v.variant || '_lone'] = v;
+    }
+    return byKey['normal']
+      || byKey['holofoil']
+      || byKey['reverseHolo']
+      || byKey['_lone']
+      || variants[0];
+  }
+
+  // For each unique card (by cardId), find the cheapest priced variant.
+  // Set Complete value calc uses this — set-completers buy the cheapest
+  // available print, so the realistic cost is min raw across variants.
+  function cheapestRawForCard(variants){
+    let min = null;
+    for (const v of variants){
+      const r = v.raw;
+      if (r == null) continue;
+      if (min == null || r < min) min = r;
+    }
+    return min;
+  }
+
+  // Build the display list for the current mode. In Master Set, that's
+  // every variant slot. In Set Complete, group variants by cardId and
+  // surface only the primary slot — but override its price fields with
+  // the cheapest available variant's price so the slot display and the
+  // value summary agree (set-completers buy whatever's cheapest).
+  function computeActiveCards(){
+    if (!setData) return [];
+    if (mode === 'master') return setData.cards;
+    const groups = {};
+    const order = [];
+    for (const c of setData.cards){
+      const cid = c.cardId || c.id;
+      if (!groups[cid]){ groups[cid] = []; order.push(cid); }
+      groups[cid].push(c);
+    }
+    const out = [];
+    for (const cid of order){
+      const variants = groups[cid];
+      const primary = pickPrimaryVariant(variants);
+      const minRaw = cheapestRawForCard(variants);
+      // Shallow copy and override price fields with cheapest-variant values.
+      // Strip the variant tag so Set Complete slots don't show a
+      // "Regular" / "Holo" badge — the slot represents the card itself,
+      // not a specific finish.
+      out.push(Object.assign({}, primary, {
+        raw: minRaw,
+        psa10: minRaw == null ? null : Math.round(minRaw * 3.5 * 100) / 100,
+        grade_worthy: minRaw != null && minRaw >= 50,
+        variant: undefined,
+        variantLabel: undefined,
+        _variantCount: variants.length,
+      }));
+    }
+    return out;
+  }
+
+  function updateModeUI(){
+    document.querySelectorAll('.mode-bar .mode-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.mode === mode);
+    });
+    document.getElementById('modeHint').textContent =
+      (mode === 'complete') ? 'One of each numbered card' : 'Every finish variant tracked separately';
+  }
+
   function migrateHave(haveObj, cards){
     const validIds = new Set();
     const firstVariantByCardId = {};
@@ -326,7 +441,8 @@
     wrap.innerHTML = '';
     if (!setData) return;
 
-    const cards = setData.cards;
+    activeCards = computeActiveCards();
+    const cards = activeCards;
     const totalPages = Math.ceil(cards.length / 9);
     const q = query.trim().toLowerCase();
 
@@ -419,7 +535,7 @@
     const pageNumMatch = sec.querySelector('.page-title').textContent.match(/Page (\d+)/);
     if (!pageNumMatch) return;
     const p = parseInt(pageNumMatch[1])-1;
-    const pageCards = setData.cards.slice(p*9, p*9+9);
+    const pageCards = activeCards.slice(p*9, p*9+9);
     const cnt = pageCards.filter(x => getQty(x.id) > 0).length;
     const firstN = pageCards[0].n, lastN = pageCards[pageCards.length-1].n;
     const range = firstN === lastN ? `#${firstN}` : `#${firstN}–#${lastN}`;
@@ -464,8 +580,8 @@
   }
 
   function updateProgress(){
-    const total = setData.cards.length;
-    const got = setData.cards.filter(c => getQty(c.id) > 0).length;
+    const total = activeCards.length;
+    const got = activeCards.filter(c => getQty(c.id) > 0).length;
     const pct = total ? Math.round(got/total*100) : 0;
     document.getElementById('progress').innerHTML = `<strong>${got}</strong>/${total} (${pct}%)`;
     updateValueSummary();
@@ -475,11 +591,23 @@
     const el = document.getElementById('valueSummary');
     if (!setData){ el.style.display = 'none'; return; }
     let total = 0, mine = 0;
-    for (const c of setData.cards){
-      if (c.raw == null) continue;
-      total += c.raw;
-      const qty = getQty(c.id);
-      if (qty > 0) mine += c.raw * qty;  // duplicates count toward your value
+    if (mode === 'master'){
+      // Sum every variant slot. Duplicates of the same variant multiply qty.
+      for (const c of setData.cards){
+        if (c.raw == null) continue;
+        total += c.raw;
+        const qty = getQty(c.id);
+        if (qty > 0) mine += c.raw * qty;
+      }
+    } else {
+      // Set Complete: each entry's `raw` was already overridden to the
+      // cheapest variant's price in computeActiveCards.
+      for (const c of activeCards){
+        if (c.raw == null) continue;
+        total += c.raw;
+        const qty = getQty(c.id);
+        if (qty > 0) mine += c.raw * qty;
+      }
     }
     if (total <= 0){
       el.style.display = 'inline-block';
@@ -516,6 +644,17 @@
       render();
     };
   });
+
+  document.querySelectorAll('.mode-bar .mode-btn').forEach(b=>{
+    b.onclick = ()=>{
+      const next = b.dataset.mode;
+      if (next === mode) return;
+      mode = next;
+      saveMode();
+      updateModeUI();
+      render();
+    };
+  });
   document.getElementById('search').oninput = (e)=>{ query = e.target.value; render(); };
   document.getElementById('resetBtn').onclick = ()=>{
     if (confirm('Clear all slotted cards for this set?')){
@@ -534,15 +673,20 @@
         saveHave();
       }
       document.title = d.name + ' Binder — Pokemon Pack Guide';
-      document.getElementById('setName').textContent = d.name + ' — Master Set Binder';
-      const totalPages = Math.ceil(d.cards.length/9);
+      document.getElementById('setName').textContent = d.name + ' Binder';
       const uniqueCards = new Set(d.cards.map(c => c.cardId || c.id)).size;
-      const slotSummary = (uniqueCards === d.cards.length)
-        ? `${d.cards.length} cards`
-        : `${d.cards.length} slots (${uniqueCards} cards · variants tracked separately)`;
+      const masterPages = Math.ceil(d.cards.length / 9);
+      const completePages = Math.ceil(uniqueCards / 9);
+      // Two-line summary so the user sees both views' totals at a glance.
+      const summaryLine = (uniqueCards === d.cards.length)
+        ? `${d.cards.length} cards · ${masterPages} binder pages (9-pocket) · Released ${d.release_date}`
+        : `Set Complete: ${uniqueCards} cards · ${completePages} pages` +
+          ` &nbsp;·&nbsp; Master Set: ${d.cards.length} slots · ${masterPages} pages` +
+          ` &nbsp;·&nbsp; Released ${d.release_date}`;
       document.getElementById('setSub').innerHTML =
-        `${slotSummary} · ${totalPages} binder pages (9-pocket) · Released ${d.release_date}<br>` +
+        `${summaryLine}<br>` +
         `<b>Tap a card to add 1</b> (tap again for 2, 3…). <b>Long-press</b> to clear. Tap 🔍 to enlarge. Saves on this device.`;
+      updateModeUI();
       render();
     })
     .catch(err=>{
