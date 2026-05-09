@@ -60,6 +60,27 @@
   }
   .set-tile-value .total-val { color: #aaa; }
   .set-tile-value .your-val { color: #4ade80; font-weight: 600; }
+  .sync-bar {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    justify-content: flex-end;
+    margin-bottom: 10px; padding: 6px 10px;
+    font-size: 0.82rem;
+  }
+  .sync-bar .sync-btn, .sync-bar .sync-gear {
+    padding: 6px 10px; background: #1a1a1a; border: 1px solid #333;
+    border-radius: 6px; color: #ddd; cursor: pointer;
+    font-size: 0.82rem; font-weight: 600;
+    font-family: inherit;
+  }
+  .sync-bar .sync-btn:hover, .sync-bar .sync-gear:hover { background: #2a2a2a; }
+  .sync-bar .sync-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+  .sync-bar .sync-status {
+    color: #888; font-size: 0.78rem; margin-right: auto;
+    font-variant-numeric: tabular-nums;
+  }
+  .sync-bar .sync-status.ok { color: #4ade80; }
+  .sync-bar .sync-status.err { color: #ff8a8a; }
+  .sync-bar .sync-status.busy { color: #ffd24a; }
   .mode-bar {
     display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
     margin-bottom: 12px; padding: 10px 12px; background: #131313;
@@ -83,9 +104,16 @@
   .loading { padding: 40px; text-align: center; color: #888; }
 </style>
     <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"12a7741b0e664f26a9670c00d353d038"}'></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script defer src="sync.js"></script>
 </head>
 <body>
 <div class="container">
+  <div class="sync-bar" id="syncBar" style="display:none;">
+    <span class="sync-status" id="syncStatus"></span>
+    <button class="sync-btn" id="syncBtn" title="Sync collection across devices">🔄 Sync</button>
+    <button class="sync-gear" id="syncGear" title="Sync settings">⚙</button>
+  </div>
   <header>
     <h1>📖 All Master Set Binders</h1>
     <div class="sub">Number-ordered checklists for every Pokémon set. 9-pocket binder layout.</div>
@@ -315,6 +343,123 @@
       document.getElementById('content').innerHTML =
         '<div class="empty">Binder library is still being generated. Check back in a few minutes.</div>';
     });
+
+  // ----- Cross-device sync wiring (mirrors binder.html) -----
+
+  function fmtAgo(ms){
+    if (!ms) return 'never';
+    const sec = Math.max(0, Math.floor((Date.now() - ms) / 1000));
+    if (sec < 5) return 'just now';
+    if (sec < 60) return sec + 's ago';
+    if (sec < 3600) return Math.floor(sec/60) + 'm ago';
+    if (sec < 86400) return Math.floor(sec/3600) + 'h ago';
+    return Math.floor(sec/86400) + 'd ago';
+  }
+  function setSyncStatus(text, kind){
+    const el = document.getElementById('syncStatus');
+    if (!el) return;
+    el.className = 'sync-status' + (kind ? ' ' + kind : '');
+    el.textContent = text;
+  }
+  function refreshSyncStatus(){
+    if (!window.BinderSync) return;
+    const last = BinderSync.getLastSyncedAt();
+    if (last) setSyncStatus('Last synced ' + fmtAgo(last));
+    else setSyncStatus(BinderSync.hasPassphrase() ? 'Not synced yet' : 'Not set up');
+  }
+
+  async function runSync(){
+    if (!window.BinderSync || !BinderSync.isConfigured()) return;
+    let pass = BinderSync.getStoredPassphrase();
+    if (!pass){
+      pass = await BinderSync.promptPassphrase({
+        title: 'Set up sync',
+        body: 'Pick a passphrase you can remember on every device. <b>This is end-to-end encrypted</b> — we can\'t recover it if you forget. Don\'t reuse a real password.',
+        okLabel: 'Save & sync'
+      });
+      if (!pass) return;
+      BinderSync.setStoredPassphrase(pass);
+    }
+    const btn = document.getElementById('syncBtn');
+    btn.disabled = true;
+    setSyncStatus('Syncing…', 'busy');
+    try {
+      await BinderSync.syncOnce(pass);
+      setSyncStatus('Synced ' + fmtAgo(BinderSync.getLastSyncedAt()), 'ok');
+    } catch (e){
+      const msg = (e && e.message) || 'Sync failed';
+      setSyncStatus(msg, 'err');
+      if (/passphrase/i.test(msg)) BinderSync.setStoredPassphrase(null);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+  async function changePassphrase(){
+    const next = await BinderSync.promptPassphrase({
+      title: 'Change passphrase',
+      body: 'Enter a new passphrase. We\'ll re-encrypt your local data with it on the next sync. Your old cloud row stays orphaned until you wipe it.',
+      okLabel: 'Save'
+    });
+    if (!next) return;
+    BinderSync.setStoredPassphrase(next);
+    refreshSyncStatus();
+  }
+  async function clearPassphrase(){
+    const ok = await BinderSync.confirm({
+      title: 'Clear passphrase from this device?',
+      body: 'Cloud data is untouched — sign back in with the same passphrase later. Local progress on this device stays.',
+      okLabel: 'Clear'
+    });
+    if (!ok) return;
+    BinderSync.setStoredPassphrase(null);
+    refreshSyncStatus();
+  }
+  async function wipeCloud(){
+    const pass = BinderSync.getStoredPassphrase();
+    if (!pass){ setSyncStatus('Set a passphrase first', 'err'); return; }
+    const ok = await BinderSync.confirm({
+      title: 'Wipe cloud data?',
+      body: 'Deletes the encrypted blob at your passphrase\'s row. Local progress is untouched. <b>This can\'t be undone.</b>',
+      okLabel: 'Wipe',
+      danger: true
+    });
+    if (!ok) return;
+    try {
+      await BinderSync.wipeCloud(pass);
+      setSyncStatus('Cloud wiped', 'ok');
+    } catch (e){
+      setSyncStatus((e && e.message) || 'Wipe failed', 'err');
+    }
+  }
+
+  function initSync(){
+    if (!window.BinderSync) return;
+    const bar = document.getElementById('syncBar');
+    if (!BinderSync.isConfigured()){ bar.style.display = 'none'; return; }
+    bar.style.display = 'flex';
+    document.getElementById('syncBtn').onclick = runSync;
+    document.getElementById('syncGear').onclick = (e) => {
+      e.stopPropagation();
+      BinderSync.openSettingsMenu(e.currentTarget, {
+        onChange: changePassphrase,
+        onClear: clearPassphrase,
+        onWipe: wipeCloud
+      });
+    };
+    refreshSyncStatus();
+    setInterval(refreshSyncStatus, 30000);
+  }
+
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initSync);
+  } else {
+    initSync();
+  }
+
+  // Re-render after a successful sync — manifest counts haven't changed
+  // but each tile's per-set progress reads from localStorage which was
+  // just merged with cloud.
+  window.addEventListener('binderSync:complete', () => { render(); });
 })();
 </script>
 </body>
