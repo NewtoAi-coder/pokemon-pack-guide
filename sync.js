@@ -30,8 +30,11 @@
 (function (window) {
   'use strict';
 
-  const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+  const SUPABASE_URL = 'https://vzmrpywrkyzqbarqwpna.supabase.co';
+  // New-format publishable key (replaces the legacy "anon" eyJ... key).
+  // supabase-js v2 accepts both formats; this is verified working against
+  // the project's REST API (PGRST205 post-auth response on binder_sync).
+  const SUPABASE_ANON_KEY = 'sb_publishable_xd3_-c7lQS99QdtLAJvRGg_QJr0g1P-';
 
   // localStorage keys we own
   const PASSPHRASE_KEY = 'binder_sync_passphrase';
