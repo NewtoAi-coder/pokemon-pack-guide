@@ -313,7 +313,7 @@
         <div class="bs-modal" role="dialog" aria-modal="true">
           <div class="bs-title">${opts.title || 'Set up sync'}</div>
           <div class="bs-body">${opts.body ||
-            'Pick a passphrase you can remember on every device. <b>This is end-to-end encrypted</b> — we can\\'t recover it if you forget. Don\\'t reuse a real password.'}</div>
+            'Pick a passphrase you can remember on every device. <b>This is end-to-end encrypted</b> — we can\'t recover it if you forget. Don\'t reuse a real password.'}</div>
           <input type="password" class="bs-input" id="bs-pass" autocomplete="off" autocapitalize="off" placeholder="Your passphrase" />
           <div class="bs-error" id="bs-err"></div>
           <div class="bs-actions">
